@@ -41,7 +41,7 @@
         <script type="text/javascript" src="/lib/mergely/mergely.js?v={$libVersion}"></script>
         <link type="text/css" rel="stylesheet" href="/lib/mergely/mergely.css?v={$libVersion}" />
 
-        <div class="SBSFileList">
+        <div class="file-list">
             <a href="#{$filediff->GetFromHash()}_{$filediff->GetToHash()}"
                 data-fromHash = "{$filediff->GetFromHash()}"
                 data-fromFile = "{$filediff->GetFromFile()}"
@@ -52,7 +52,7 @@
                     {if $filediff->GetToFile()}{$filediff->GetToFile()}{else}{$filediff->GetToHash()}{/if} {t}(new){/t}
                 {elseif $filediff->GetStatus() == 'D'}
                     {if $filediff->GetFromFile()}{$filediff->GetFromFile()}{else}{$filediff->GetToFile()}{/if} {t}(deleted){/t}
-                {elseif $filediff->GetStatus() == 'M'}
+                {elseif ($filediff->GetStatus() == 'M') || ($filediff->GetStatus() == 'R')}
                     {if $filediff->GetFromFile()}
                         {assign var=fromfilename value=$filediff->GetFromFile()}
                     {else}

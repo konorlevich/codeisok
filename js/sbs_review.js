@@ -1,10 +1,10 @@
 
 SideBySideReview = function (compare, initialize) {
-    if (initialize == undefined) {
+    if (initialize === undefined) {
         initialize = false;
     }
 
-    if (compare != undefined) {
+    if (compare !== undefined) {
         this.compare = compare;
         this.leftEditor = compare.mergely('cm', 'lhs');
         this.rightEditor = compare.mergely('cm', 'rhs');
@@ -58,19 +58,17 @@ SideBySideReview.prototype = {
     },
 
     setReviewStatus: function (new_status, callback) {
-        var that = this;
-        $.post('/?a=set_review_status', {
-            review_id: this.review_id,
-            status: new_status
-        }, 'json')
-            .fail(function (data) {
-                that._saveFailureHandler(data);
-            })
-            .done(function (data) {
-                if (callback) {
-                    callback(data);
-                }
-            });
+        $.ajax(
+            '/?a=set_review_status',
+            {
+                type: 'POST',
+                data: {
+                    review_id: this.review_id,
+                    status: new_status
+                },
+                async: false
+            }
+        ).done(callback);
     },
 
     setSelection: function (range) {
@@ -168,7 +166,7 @@ SideBySideReview.prototype = {
                         }
                     );
                     for (var file_name in comments_counts) {
-                        const link = $('.SBSFileList a[data-fromfile="'+file_name+'"] .review-comments,.SBSFileList a[data-tofile="'+file_name+'"] .review-comments');
+                        const link = $('.SBSTOC .review-comments[data-fromfile="'+file_name+'"],.SBSTOC .review-comments[data-tofile="'+file_name+'"]');
                         const commentCount = comments_counts[file_name];
                         link.html(`<span>${commentCount} comment${commentCount > 1 ? 's' : ''}</span>`);
                     }
@@ -550,7 +548,7 @@ SideBySideReview.prototype = {
             review_review = `
                     ${review_review}
                     <input type="text" id="review_ticket" value="${this.ticket}" />
-                    <div id="review_loader" style="background: url('/images/search-loader.gif') transparent;height: 16px;line-height: 16px;width: 16px;display:none;">&nbsp;</div>
+                    <div id="review_loader" style="background: url('/images/loader.gif') transparent;height: 16px;line-height: 16px;width: 16px;display:none;">&nbsp;</div>
                     <div class="review-actions">
                         <div class="review_btn" id="review_abort" style="">Discard</div>
                         <div class="review_btn" id="review_finish" style="">Finish</div>

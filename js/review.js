@@ -12,7 +12,6 @@ var Review = (function() {
         ticket: null,
         select_file: null,
         select_line: null,
-        select_before: null,
         select_after: null,
         select_count: null,
         select_active: false,
@@ -59,6 +58,10 @@ var Review = (function() {
         console.log('Error');
     };
     Review.reviewSaveComplete = function() {
+        // Trigger any listeners to review comment changes
+        if (window.onhashchange) {
+            window.onhashchange();
+        }
     };
 
 
@@ -135,7 +138,7 @@ var Review = (function() {
 
     Review.checkReviewId = function() {
         var urlQuery = Review.getUrlParams();
-        if (Review.review_id == null && (urlQuery.review == undefined || urlQuery.review == '')) {
+        if (Review.review_id === null && (urlQuery.review === undefined || urlQuery.review === '')) {
             var data = {
                 commit_message: Review.getCommitMessage(),
                 hash: Review.getHash(),
@@ -159,7 +162,7 @@ var Review = (function() {
 
             SessionChecker.setTimer();
 
-        } else if (Review.review_id == 0) {
+        } else if (Review.review_id === 0) {
             Review.ticket = $('#review_ticket').val();
         }
         return true;
@@ -179,7 +182,6 @@ var Review = (function() {
             file: Review.select_file,
             line: Review.select_line,
             real_line: Review.select_after,
-            real_line_before: Review.select_before,
             text: $('#review_text').val(),
             lines_count: Review.select_count
         };
@@ -189,14 +191,18 @@ var Review = (function() {
             }
             Review.hideForm();
             $('#review_text').val('');
+
             if (!Review.getUrlParams().review) {
-                location = location.protocol + '//' + location.host + location.pathname + location.search + '&review=' + data.review_id + '#' + data.comment_id;
+                history.replaceState(null, null, location.search + '&review=' + data.review_id + '#' + data.comment_id);
+                Review.review_id = data.review_id;
+                Review.checkReviewId();
             } else {
                 location.hash = data.comment_id;
-                Review.showComments();
-                $('#review_finish').show();
-                $('#review_abort').show();
             }
+
+            Review.showComments();
+            $('#review_finish').show();
+            $('#review_abort').show();
         }, 'json')
             .error(Review.saveError).complete(Review.reviewSaveComplete);
     };
@@ -222,12 +228,15 @@ var Review = (function() {
         if (Review.is_review_controls_dim) {
             return;
         }
-        var reviewData = {
-            review_id: Review.review_id,
-            status: this.id == 'review_finish' ? 'Finish' : 'Deleted'
-        };
         Review.dimReviewControls(true);
-        $.post('/?a=set_review_status', reviewData, function(data) {
+        $.ajax('/?a=set_review_status', {
+            type: 'POST',
+            data: {
+                review_id: Review.review_id,
+                status: this.id === 'review_finish' ? 'Finish' : 'Deleted',
+            },
+            async: false
+        }).success(function (data) {
             Review.dimReviewControls(false);
             if (!Review.reviewSaveSuccess(data)) {
                 return;
@@ -236,8 +245,7 @@ var Review = (function() {
             $('#review_finish').hide();
             $('#review_abort').hide();
             Review.showComments();
-        })
-            .error(Review.saveError).complete(Review.reviewSaveComplete);
+        }).error(Review.saveError).complete(Review.reviewSaveComplete);
     };
 
     Review.getClickTargetParams = function(target) {
@@ -352,7 +360,7 @@ var Review = (function() {
                         if (data.comments[i].side) {
                             real_line = real_line + 1;
                         }
-                        var real_line_before = parseInt(data.comments[i].real_line_before) || undefined;
+                        var real_line_before = undefined;
                         var text = data.comments[i].text;
                         var author = data.comments[i].author;
                         var date = data.comments[i].date;
@@ -470,7 +478,6 @@ var Review = (function() {
         Review.select_file = null;
         Review.select_line = null;
         Review.select_after = null;
-        Review.select_before = null;
         Review.select_count = null;
         Review.select_active = false;
         try {
@@ -517,7 +524,6 @@ var Review = (function() {
         Review.select_file = params.file;
         Review.select_line = params.line;
         Review.select_start_line = params.line;
-        Review.select_before = params.before;
         Review.select_after = params.after;
         Review.select_active = true;
         Review.selectReset();
@@ -526,6 +532,12 @@ var Review = (function() {
 
     Review.selectEnd = function(e) {
         $('body').off('mousemove', null, null, Review.selectMove);
+
+        // If there is a selection in the document, we don't want to show dialog
+        // This allows developers to copy code without losing selection
+        if (window.getSelection().isCollapsed === false) {
+            return;
+        }
 
         var $target = $(e.target);
 
@@ -536,14 +548,12 @@ var Review = (function() {
             }
             if ($target.data('line')) {
                 Review.select_count = $target.data('lines_count');
-                Review.select_before = $target.data('real_line_before');
                 Review.select_after = $target.data('real_line');
                 $target = Review.getNodeFileLine($target.data('file'), $target.data('line'), $target.data('real_line_before'), $target.data('real_line'));
             }
             var params = Review.getClickTargetParams($target[0]);
             Review.select_file = params.file;
             Review.select_line = params.line;
-            Review.select_before = params.before;
             Review.select_after = params.after;
             Review.selectReset();
             Review.showForm($target[0]);
@@ -581,7 +591,6 @@ var Review = (function() {
             var params = Review.getClickTargetParams(target);
             Review.select_file = params.file;
             Review.select_line = params.line;
-            Review.select_before = params.before;
             Review.select_after = params.after;
             Review.selectReset();
             if ($target.hasClass('spaces') || $target.hasClass('line-number')) {
@@ -608,7 +617,6 @@ var Review = (function() {
         }
 
         if (params.line > Review.select_line) {
-            Review.select_before = params.before;
             Review.select_after = params.after;
         }
         Review.select_line = Math.max(params.line, Review.select_line, Review.select_start_line);
@@ -744,15 +752,32 @@ var Review = (function() {
             $('#review_abort').click(Review.setReviewStatus);
             $('#review_commentnav_prev').click(Review.gotoPrevComment);
             $('#review_commentnav_next').click(Review.gotoNextComment);
+
+            let keyMap = {};
+
             $('#review_text').keydown(function(e) {
-                if (e.keyCode == 13) {
+                keyMap[e.keyCode] = true;
+
+                // Detect CMD+Enter
+                if (keyMap[91] && keyMap[13]) {
+                    Review.commentSubmit();
+
+                    // Clear it because we won't trigger keyup if we modify the DOM
+                    keyMap = {};
+                }
+                else if (keyMap[13]) {
+                    e.preventDefault();
+
                     var cur = getInputSelection(e.target);
                     this.value = this.value.substr(0, cur.start) + "\n" + this.value.substr(cur.end);
                     setSelectionRange(e.target, cur.start + 1, cur.end + 1);
-                    e.preventDefault();
+                    Review.adjustTextarea.call(this, e);
                 }
+            })
+            .keyup(function(e) {
+                delete keyMap[e.keyCode];
                 Review.adjustTextarea.call(this, e);
-            }).keyup(Review.adjustTextarea);
+            });
 
             $('body').on({
                 mousedown: Review.selectStart

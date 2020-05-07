@@ -19,14 +19,14 @@ body.has-review-block {
 }
 div.review_btn {
     padding: 11px 20px 9px !important;
-    border: 1px solid #7000E3 !important;
+    border: 1px solid #000 !important;
     border-radius: 10px !important;
     display: inline-block;
     cursor: pointer !important;
     color: #333 !important;
     text-align: center !important;
     color: #fff !important;
-    background-color: #7000E3 !important;
+    background-color: #000 !important;
     font-family: Helvetica, Arial, sans-serif !important;
     line-height: 1.5em !important;
     margin-right: 5px !important;
@@ -37,8 +37,8 @@ div.review_btn.comment_delete,
 #review_abort,
 #review_cancel {
     background: white !important;
-    color: #303030 !important;
     border-color: #c0c0c0 !important;
+    color: #000 !important;
 }
 
 span.btn_small {
@@ -63,7 +63,7 @@ span.btn_small {
     outline: none !important;
     font-family: "SF UI Text", Helvetica, Arial, sans-serif !important;
 }
-#review_text:focus {border: 1px solid #7000e3 !important;}
+#review_text:focus {border: 1px solid #000 !important;}
 #review_msg {
     white-space: pre-wrap !important;
 }
@@ -92,7 +92,7 @@ span.btn_small {
 }
 
 .comment-container > div {
-    color: blue !important;
+    color: black !important;
     background: #ffffff !important;
     white-space: pre-wrap;
     padding: 5px !important;
@@ -153,11 +153,13 @@ div.review-selected {
     color: #000 !important;
     font-size: 14px !important;
 }
-.date {
+.comment-user .date {
     font-size: 12px !important;
-    letter-spacing: -0.5px;
-    color: #949494 !important;
+    color: #8e8e8e !important;
     margin-left: 20px;
+    float: right;
+    clear: both;
+    font-weight: 100;
 }
 .author {
     font-weight: bold;
@@ -229,14 +231,20 @@ div.review-selected {
     border-radius: 5px;
 }
 
+span.head, span.review {
+	/* head badge */
+	padding: 4px 10px;
+	font-size: 12px;
+	font-weight: normal;
+	background-color: #d1ffd1;
+	border-radius: 5px;
+	margin-left: 10px;
+    white-space: nowrap;
+}
+
 span.review {
     /* review badge */
-    padding: 0px 4px;
-    font-size: 10px;
-    font-weight: normal;
     background-color: #ffaaaa;
-    border: 1px solid;
-    border-color: #ffcccc #ff0000 #ff0000 #ffcccc;
 }
 
 #session_checker {
@@ -289,14 +297,51 @@ span.review {
   white-space: normal;
 }
 
+.comment-container .comments + .comments {
+  padding-left: 30px !important;
+  position: relative;
+}
+
+.comment-container .comments + .comments + .comments {
+  padding-left: 45px !important;
+}
+
+.comment-container .comments + .comments + .comments + .comments {
+    padding-left: 60px !important;
+}
+
+.comment-container .comments + .comments + .comments + .comments + .comments {
+    padding-left: 75px !important;
+}
+
+.comment-container .comments + .comments:after {
+  content: "";
+  background: #f9f9f9;
+  left: 0;
+  top: 0;
+  width: 15px;
+  position: absolute;
+  height: 100%;
+}
+
+.comment-container .comments + .comments + .comments:after {
+  width: 30px;
+}
+
+.comment-container .comments + .comments + .comments + .comments:after {
+  width: 45px;
+}
+
+.comment-container .comments + .comments + .comments + .comments + .comments:after {
+  width: 60px;
+}
+
 .comment-container .comments, .comment-container .comments a {
   font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace !important;
-  text-decoration: none !important;
 }
 
 .comment-container .comments .text,
 .cloud_with_text.sbs .text {
-  color: #303030;
   display: block;
   padding-top: 10px;
   padding-bottom: 10px;
@@ -326,6 +371,8 @@ span.review {
 #notifications strong {
     cursor: pointer;
     display: inline-block;
+    color: #000;
+    text-decoration: underline;
 }
 
 .hoverable {
@@ -389,3 +436,4 @@ span.review {
 
 .SBSContent .CodeMirror-linewidget + .CodeMirror-linewidget {
     margin-top: -17px;
+}
